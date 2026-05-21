@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class WorkoutSelector extends StatefulWidget {
   final Function(List<String>) onSave;
-  final List<dynamic> workouts;
+  final List<String> initialItems;
 
   const WorkoutSelector({
     super.key,
     required this.onSave,
-    required this.workouts,
+    required this.initialItems,
   });
 
   @override
@@ -15,47 +15,74 @@ class WorkoutSelector extends StatefulWidget {
 }
 
 class _WorkoutSelectorState extends State<WorkoutSelector> {
-  final List<String> options = [
-    "Бег",
-    "Ходьба",
-    "Пресс",
-    "Отжимания",
-    "Приседания",
-    "Планка",
-    "Велотренажёр",
-  ];
+  final TextEditingController controller = TextEditingController();
 
-  List<String> selected = [];
+  late List<String> workouts;
 
   @override
   void initState() {
     super.initState();
-    loadTodayWorkouts();
+    workouts = List.from(widget.initialItems);
   }
 
-  void loadTodayWorkouts() {
-    final today = DateTime.now().toIso8601String().split("T")[0];
+  // CREATE
+  void addWorkout() {
+    final text = controller.text.trim();
+    if (text.isEmpty) return;
 
-    final todayData = widget.workouts.firstWhere(
-      (w) => w['date'] == today,
-      orElse: () => null,
-    );
-
-    if (todayData != null) {
-      selected = List<String>.from(todayData['items'] ?? []);
-    }
-  }
-
-  void toggle(String item) {
     setState(() {
-      if (selected.contains(item)) {
-        selected.remove(item);
-      } else {
-        selected.add(item);
-      }
+      workouts.add(text);
+      controller.clear();
     });
 
-    widget.onSave(selected);
+    widget.onSave(workouts);
+  }
+
+  // DELETE
+  void deleteWorkout(int index) {
+    setState(() {
+      workouts.removeAt(index);
+    });
+
+    widget.onSave(workouts);
+  }
+
+  // UPDATE
+  void editWorkout(int index) {
+    final editController = TextEditingController(text: workouts[index]);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Редактировать тренировку"),
+          content: TextField(
+            controller: editController,
+            decoration: const InputDecoration(hintText: "Новое название"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Отмена"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newText = editController.text.trim();
+                if (newText.isEmpty) return;
+
+                setState(() {
+                  workouts[index] = newText;
+                });
+
+                widget.onSave(workouts);
+                Navigator.pop(context);
+              },
+              child: const Text("Сохранить"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -67,19 +94,53 @@ class _WorkoutSelectorState extends State<WorkoutSelector> {
           "Тренировки на сегодня",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
+
         const SizedBox(height: 10),
 
-        Wrap(
-          spacing: 8,
-          children: options.map((item) {
-            final isSelected = selected.contains(item);
+        // INPUT + ADD
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  hintText: "Добавьте тренировку",
+                ),
+              ),
+            ),
+            IconButton(icon: const Icon(Icons.add), onPressed: addWorkout),
+          ],
+        ),
 
-            return ChoiceChip(
-              label: Text(item),
-              selected: isSelected,
-              onSelected: (_) => toggle(item),
-            );
-          }).toList(),
+        const SizedBox(height: 10),
+
+        // LIST (READ)
+        Expanded(
+          child: ListView.builder(
+            itemCount: workouts.length,
+            itemBuilder: (context, index) {
+              return Card(
+                child: ListTile(
+                  title: Text(workouts[index]),
+
+                  // ACTIONS (CRUD)
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => editWorkout(index),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => deleteWorkout(index),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );

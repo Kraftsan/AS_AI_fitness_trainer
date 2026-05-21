@@ -12,31 +12,28 @@ class StorageService {
   static Future<void> save(Map<String, dynamic> data) async {
     final jsonString = jsonEncode(data);
 
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_key, jsonString);
-      return;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, jsonString);
 
-    final file = await _getFile();
-    await file.writeAsString(jsonString);
+    // принудительный flush через повторное чтение
+    await prefs.reload();
   }
 
   // -------- LOAD --------
   static Future<Map<String, dynamic>?> load() async {
     try {
-      if (kIsWeb) {
-        final prefs = await SharedPreferences.getInstance();
-        final data = prefs.getString(_key);
-        if (data == null) return null;
-        return jsonDecode(data);
+      final prefs = await SharedPreferences.getInstance();
+      final data = prefs.getString(_key);
+
+      if (data == null || data.isEmpty) return null;
+
+      final decoded = jsonDecode(data);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      } else {
+        return Map<String, dynamic>.from(decoded);
       }
-
-      final file = await _getFile();
-      if (!await file.exists()) return null;
-
-      final text = await file.readAsString();
-      return jsonDecode(text);
     } catch (e) {
       return null;
     }

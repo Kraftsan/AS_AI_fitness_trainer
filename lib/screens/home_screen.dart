@@ -15,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final weightController = TextEditingController();
 
   Map<String, dynamic> userData = {};
-  List<dynamic> workouts = [];
+  List<String> workouts = [];
   List<String> selectedWorkouts = [];
 
   @override
@@ -28,7 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void loadUser() async {
     final data = await StorageService.load();
 
-    if (data != null) {
+    if (data == null) return;
+
+    setState(() {
       userData = data;
 
       final profile = data['profile'] ?? {};
@@ -37,10 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
       heightController.text = (profile['height'] ?? "").toString();
       weightController.text = (profile['weight'] ?? "").toString();
 
-      workouts = data['workouts'] ?? [];
-
-      setState(() {});
-    }
+      workouts = List<String>.from(data['workouts'] ?? []);
+    });
   }
 
   // SAVE PROFILE
@@ -60,21 +60,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // SAVE WORKOUTS
   void saveWorkouts(List<String> selected) async {
-    final today = DateTime.now().toIso8601String().split("T")[0];
-
-    int index = workouts.indexWhere((w) => w['date'] == today);
-
-    if (index >= 0) {
-      workouts[index]['items'] = selected;
-    } else {
-      workouts.add({"date": today, "items": selected});
-    }
-
-    userData['workouts'] = workouts;
+    userData['workouts'] = selected;
 
     await StorageService.save(userData);
 
     setState(() {
+      workouts = selected;
       selectedWorkouts = selected;
     });
   }
@@ -106,13 +97,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(10),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: WorkoutSelector(
+                  initialItems: workouts,
+                  onSave: saveWorkouts,
+                ),
               ),
-              child: WorkoutSelector(workouts: workouts, onSave: saveWorkouts),
             ),
           ],
         ),
