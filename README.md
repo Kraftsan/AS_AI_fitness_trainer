@@ -1,17 +1,96 @@
-# ai_fitness_trainer
+# AI Fitness Trainer
 
-A new Flutter project.
+Flutter-приложение с AI-тренером, трекингом тренировок и профилем пользователя.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Возможности
 
-A few resources to get you started if this is your first Flutter project:
+- Чат с AI тренером (OpenRouter / DeepSeek)
+- Профиль пользователя (имя, рост, вес)
+- История веса и прогресса
+- Выбор тренировок на день
+- Локальное сохранение данных (JSON + SharedPreferences)
+- Трекинг тренировок по датам
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## AI тренер
+
+Используется OpenRouter API:
+
+- модель: `deepseek/deepseek-chat-v3-0324`
+- персонализация через профиль пользователя
+- ответы в формате фитнес-консультаций
+
+---
+
+## Структура проекта
+```
+lib/
+├── models/ # модели данных (UserModel и т.д.)
+├── screens/ # экраны приложения
+├── services/ # API и storage логика
+└── widgets/ # UI компоненты
+```
+
+
+---
+
+## Хранение данных
+
+Данные пользователя сохраняются локально:
+
+- Web → SharedPreferences
+- Mobile/Desktop → JSON файл
+
+
+
+---
+
+## Тренировки
+
+Пользователь может:
+
+- выбирать упражнения на день
+- сохранять выбор
+- система сохраняет по датам
+
+Пример структуры:
+
+```json
+{
+  "date": "2026-05-21",
+  "items": ["Бег", "Пресс"]
+}
+
+
+## Настройка API
+
+openrouter_service.dart: 
+apiKey: "YOUR_KEY_HERE"
+
+
+## Технологии
+Flutter
+
+Dart
+
+OpenRouter API
+
+SharedPreferences
+
+File Storage (path_provider)
+
+### План развития
+
+- графики прогресса веса
+
+- Добавление полноценных чатов
+
+- авторизация пользователей
+
+- облачное хранение данных
+
+- рекомендации питания
+
